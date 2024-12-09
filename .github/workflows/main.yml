@@ -1,35 +1,49 @@
 name: Terraform Deployment
-
 on:
   push:
     branches:
       - main
+env:
+  PROJECT_ID: your_project_id
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
+      - name: Set up Google Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v1'
         with:
-          terraform_version: 1.0.0
+          version: '>= 363.0.0'
+          service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
+          project_id: ${{env.PROJECT_ID}}
 
-      - name: Authenticate to Google Cloud
-        run: echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
-      - name: Debug JSON Content
-        run: cat /tmp/account.json  # Debug step to print JSON content
-      - run: gcloud auth activate-service-account --key-file=/tmp/account.json
-      - run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+      - name: Configure Terraform
+        run: |
+          echo ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }} > key.json
+          gcloud auth activate-service-account --key-file=key.json
+          gcloud config set project YOUR_PROJECT_ID
+          gcloud config set compute/zone YOUR_COMPUTE_ZONE
+          rm -f key.json
 
-      - name: Terraform Init
+      - name: Initialize Terraform
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan
+      - name: Validate Terraform configuration
+        run: terraform validate
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Plan Terraform deployment
+        run: terraform plan -out=tfplan
+
+      - name: Apply Terraform changes
+        run: terraform apply tfplan -auto-approve
+
+      - name: Clean up Terraform artifacts
+        run: rm -f tfplan
+
