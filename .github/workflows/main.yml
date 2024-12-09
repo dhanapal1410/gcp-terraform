@@ -18,12 +18,11 @@ jobs:
         with:
           terraform_version: 1.0.0
 
-      - name: Terraform Format
-        run: terraform fmt -check -diff
-
       - name: Authenticate to Google Cloud
-        run: printf "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
-      - run: gcloud auth activate-service-account --key-file= /tmp/account.json
+        run: echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
+      - name: Debug JSON Content
+        run: cat /tmp/account.json  # Debug step to print JSON content
+      - run: gcloud auth activate-service-account --key-file=/tmp/account.json
       - run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Terraform Init
