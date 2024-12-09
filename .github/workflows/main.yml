@@ -18,6 +18,9 @@ jobs:
         with:
           terraform_version: 1.0.0
 
+      - name: Terraform Format
+        run: terraform fmt -check -diff
+
       - name: Authenticate to Google Cloud
         run: echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
       - run: gcloud auth activate-service-account --key-file=/tmp/account.json
