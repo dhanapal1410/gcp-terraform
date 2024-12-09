@@ -23,7 +23,7 @@ jobs:
 
       - name: Authenticate to Google Cloud
         run: printf "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
-      - run: gcloud auth activate-service-account --key-file=/tmp/account.json
+      - run: gcloud auth activate-service-account --key-file= /tmp/account.json
       - run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Terraform Init
