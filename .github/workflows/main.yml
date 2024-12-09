@@ -19,6 +19,7 @@ jobs:
         version: 'latest'
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         export_default_credentials: true
+        scopes: https://www.googleapis.com/auth/cloud-platform
 
     - name: Install Terraform
       uses: hashicorp/setup-terraform@v1
