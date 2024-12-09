@@ -1,0 +1,33 @@
+name: Terraform Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: Authenticate to Google Cloud
+        run: echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/account.json
+      - run: gcloud auth activate-service-account --key-file=/tmp/account.json
+      - run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
