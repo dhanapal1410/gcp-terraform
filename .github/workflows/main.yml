@@ -1,49 +1,37 @@
-name: Terraform Deployment
+name: 'Terraform Apply'
+
 on:
   push:
     branches:
       - main
-env:
-  PROJECT_ID: your_project_id
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Google Cloud SDK
-        uses: 'google-github-actions/setup-gcloud@v1'
-        with:
-          version: '>= 363.0.0'
-          service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
-          project_id: ${{env.PROJECT_ID}}
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.0.0
 
-      - name: Configure Terraform
-        run: |
-          echo ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }} > key.json
-          gcloud auth activate-service-account --key-file=key.json
-          gcloud config set project YOUR_PROJECT_ID
-          gcloud config set compute/zone YOUR_COMPUTE_ZONE
-          rm -f key.json
+    - name: Authenticate to Google Cloud
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      run: |
+        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > /tmp/account.json
+        gcloud auth activate-service-account --key-file=/tmp/account.json
+        gcloud config set project ${{ secrets.TF_VAR_project_id }}
 
-      - name: Initialize Terraform
-        run: terraform init
+    - name: Initialize Terraform
+      run: terraform init
 
-      - name: Validate Terraform configuration
-        run: terraform validate
+    - name: Plan Terraform
+      run: terraform plan -out=tfplan
 
-      - name: Plan Terraform deployment
-        run: terraform plan -out=tfplan
-
-      - name: Apply Terraform changes
-        run: terraform apply tfplan -auto-approve
-
-      - name: Clean up Terraform artifacts
-        run: rm -f tfplan
-
+    - name: Apply Terraform
+      if: github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve tfplan
