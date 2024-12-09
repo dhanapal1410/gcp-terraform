@@ -1,10 +1,10 @@
 provider "google" {
-  project = "your-project-id"
+  project = "githubactions-444207"
   region  = "us-central1"
 }
 
 resource "google_project_service" "compute" {
-  project = "your-project-id"
+  project = "githubactions-444207"
   service = "compute.googleapis.com"
 }
 
